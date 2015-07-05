@@ -25,8 +25,6 @@ function woocommerce_yandex_webmoney_payu_init(){
  
       $this -> title = $this -> settings['title'];
       $this -> description = $this -> settings['description'];
-      $this -> scid = $this -> settings['scid'];
-      $this -> ShopID = $this -> settings['ShopID'];
       $this -> liveurl = '';
  
       $this -> msg['message'] = "";
