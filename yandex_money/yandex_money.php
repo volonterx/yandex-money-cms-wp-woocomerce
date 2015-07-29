@@ -1,55 +1,135 @@
 <?php
 /**
 	Plugin Name: yandexmoney_wp_woocommerce
-	Plugin URI: https://github.com/yandex-money/yandexmoney_wp_woocommerce
+	Plugin URI: https://github.com/yandex-money/yandex-money-cms-wp-woocomerce
 	Description: Online shop with Yandex.Money support.
-	Version: 1.2.0
+	Version: 2.0.0
 	Author: Yandex.Money
 	Author URI: http://money.yandex.ru
  */
 
-include_once 'yandex/yandex.php';
-include_once 'bank/bank.php';
-include_once 'terminal/terminal.php';
-include_once 'webmoney/webmoney.php';
-include_once 'alfabank/alfabank.php';
-include_once 'masterpass/masterpass.php';
-include_once 'mobile/mobile.php';
-include_once 'psbank/psbank.php';
-include_once 'sberbank/sberbank.php';
-/*
-add_filter( 'woocommerce_general_settings', 'add_order_ym_shopPassword' );
-function add_order_ym_shopPassword( $settings ) {
-  $updated_settings = array();
-  foreach ( $settings as $section ) {
-    if ( isset( $section['id'] ) && 'general_options' == $section['id'] &&
-       isset( $section['type'] ) && 'sectionend' == $section['type'] ) {
-      $updated_settings[] = array(
-        'name'     => __('Яндекс.Деньги shopPassword','yandex_money'),
-        'id'       => 'ym_shopPassword',
-        'type'     => 'text',
-        'css'      => 'min-width:300px;',
-        'std'      => '',  // WC < 2.0
-        'default'  => '',  // WC >= 2.0
-        'desc'     => __( '<br/>Необходим для корректной работы paymentAvisoURL и checkURL. shopPassword устанавливается при регистрации магазина в системе Яндекс.Деньги', 'yandex_money' ),
-      );
-	  
-		$pages = get_pages(); 
-		$p_arr = array();
-		foreach ( $pages as $page ) 
-			$p_arr[$page->ID] = $page->post_title;
-		
-    }
-    $updated_settings[] = $section;
-  }
-  return $updated_settings;
+include_once 'yamoney_gateway.class.php';
+
+function ya_all_gateway_icon( $gateways ) {
+		$url=WP_PLUGIN_URL."/".dirname( plugin_basename( __FILE__ ) ).'/images/';
+		$gateways['yandex_money']->icon = $url . 'pc.png';
+		$gateways['bank']->icon = $url . 'ac.png';
+		$gateways['terminal']->icon = $url . 'gp.png';
+		$gateways['mobile']->icon = $url . 'mc.png';
+		$gateways['yandex_webmoney']->icon = $url . 'wm.png';
+		$gateways['alfabank']->icon = $url . 'ab.png';
+		$gateways['sberbank']->icon = $url . 'sb.png';
+		$gateways['masterpass']->icon = $url . 'ma.png';
+		$gateways['psbank']->icon = $url . 'pb.png';
+	return $gateways;
+} 
+add_filter( 'woocommerce_available_payment_gateways', 'ya_all_gateway_icon' );
+
+class WC_ym_PC extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'yandex_money';
+      $this -> method_title = 'Кошелек Яндекс.Деньги';
+		$this -> long_name = 'Оплата из кошелька в Яндекс.Деньгах';
+		$this -> payment_type = 'PC';
+		parent::__construct();
+	}
 }
-*/
+
+class WC_ym_AC extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'bank';
+      $this -> method_title = 'Банковская карта';
+		$this -> long_name = 'Оплата с произвольной банковской карты';
+		$this -> payment_type = 'AC';
+		parent::__construct();
+	}
+}
+class WC_ym_GP extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'terminal';
+      $this -> method_title = 'Наличными через кассы и терминалы';
+		$this -> long_name = 'Оплата наличными через кассы и терминалы';
+		$this -> payment_type = 'GP';
+		parent::__construct();
+	}
+}
+class WC_ym_MC extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'mobile';
+      $this -> method_title = 'Счет мобильного телефона';
+		$this -> long_name = 'Платеж со счета мобильного телефона';
+		$this -> payment_type = 'MC';
+		parent::__construct();
+	}
+}
+class WC_ym_WM extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'yandex_webmoney';
+      $this -> method_title = 'Кошелек WebMoney';
+		$this -> long_name = 'Оплата из кошелька в системе WebMoney';
+		$this -> payment_type = 'WM';
+		parent::__construct();
+	}
+}
+class WC_ym_AB extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'alfabank';
+      $this -> method_title = 'Альфа-Клик';
+		$this -> long_name = 'Оплата через Альфа-Клик';
+		$this -> payment_type = 'AB';
+		parent::__construct();
+	}
+}
+class WC_ym_SB extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'sberbank';
+      $this -> method_title = 'Сбербанк: оплата по SMS или Сбербанк Онлайн';
+		$this -> long_name = 'Оплата через Сбербанк: оплата по SMS или Сбербанк Онлайн';
+		$this -> payment_type = 'SB';
+		parent::__construct();
+	}
+}
+class WC_ym_PB extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'psbank';
+      $this -> method_title = 'Интернет-банк Промсвязьбанка';
+		$this -> long_name = 'Оплата через интернет-банк Промсвязьбанка';
+		$this -> payment_type = 'PB';
+		parent::__construct();
+	}
+}
+class WC_ym_MA extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'masterpass';
+      $this -> method_title = 'MasterPass';
+		$this -> long_name = 'Оплата через MasterPass';
+		$this -> payment_type = 'MA';
+		parent::__construct();
+	}
+}
+
+function woocommerce_add_all_payu_gateway($methods) {
+   $methods[] = 'WC_ym_PC';
+	$methods[] = 'WC_ym_AC';
+	$methods[] = 'WC_ym_GP';
+	$methods[] = 'WC_ym_MC';
+	$methods[] = 'WC_ym_WM';
+	$methods[] = 'WC_ym_AB';
+	$methods[] = 'WC_ym_SB';
+	$methods[] = 'WC_ym_MA';
+	$methods[] = 'WC_ym_PB';
+   return $methods;
+}
+add_filter('woocommerce_payment_gateways', 'woocommerce_add_all_payu_gateway' );
+
 function register_my_setting() {
 	register_setting( 'woocommerce-yamoney', 'ym_Scid'); 
 	register_setting( 'woocommerce-yamoney', 'ym_ShopID'); 
 	register_setting( 'woocommerce-yamoney', 'ym_shopPassword'); 
 	register_setting( 'woocommerce-yamoney', 'ym_Demo'); 
+
+	register_setting( 'woocommerce-yamoney', 'ym_success'); 
+	register_setting( 'woocommerce-yamoney', 'ym_fail'); 
 	error_log("register_my_setting");
 } 
 add_action('admin_menu', 'register_yandexMoney_submenu_page');
@@ -64,7 +144,7 @@ function yandexMoney_submenu_page_callback() {
 ?>
 <div class="wrap">
 <h2>Настройки Яндекс.Деньги</h2>
-<p>Любое использование Вами программы означает полное и безоговорочное принятие Вами условий лицензионного договора, размещенного по адресу https://money.yandex.ru/doc.xml?id=527132 (далее – «Лицензионный договор»). Если Вы не принимаете условия Лицензионного договора в полном объёме, Вы не имеете права использовать программу в каких-либо целях.</p>
+<p>Любое использование Вами программы означает полное и безоговорочное принятие Вами условий лицензионного договора, размещенного по адресу <a href='https://money.yandex.ru/doc.xml?id=527132' target='_blank'>https://money.yandex.ru/doc.xml?id=527132</a> (далее – «Лицензионный договор»). Если Вы не принимаете условия Лицензионного договора в полном объёме, Вы не имеете права использовать программу в каких-либо целях.</p>
 <form method="post" action="options.php">
 <?php 
 wp_nonce_field('update-options'); 
@@ -85,26 +165,52 @@ do_settings_sections( 'woocommerce-yamoney' );
 <th scope="row">Демо режим<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Включить демо режим для тестирования<span></th>
 <td><input type="checkbox" name="ym_Demo" <?php echo get_option('ym_Demo')=='on'?'checked="checked"':''; ?>" /></td>
 </tr>
-
-<tr valign="top">
-<th scope="row">Scid<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Номер витрины магазина ЦПП<span></th>
-<td><input type="text" name="ym_Scid" value="<?php echo get_option('ym_Scid'); ?>" /></td>
-</tr>
  
 <tr valign="top">
-<th scope="row">ShopID<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Номер магазина ЦПП<span></th>
+<th scope="row">ShopID<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Идентификатор магазина<span></th>
 <td><input type="text" name="ym_ShopID" value="<?php echo get_option('ym_ShopID'); ?>" /></td>
 </tr>
 
+<tr valign="top">
+<th scope="row">Scid<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Номер витрины магазина<span></th>
+<td><input type="text" name="ym_Scid" value="<?php echo get_option('ym_Scid'); ?>" /></td>
+</tr>
 <tr valign="top">
 <th scope="row">shopPassword<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Устанавливается при регистрации магазина в системе Яндекс.Деньги<span></th>
 <td><input type="text" name="ym_shopPassword" value="<?php echo get_option('ym_shopPassword'); ?>" /></td>
 </tr>
 
+<tr valign="top">
+<th scope="row">Страница успеха<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Страница, которая отображается после успешной оплаты<span></th>
+<td><select id="ym_success" name="ym_success">
+    <?php
+    if( $pages = get_pages() ){
+        foreach( $pages as $page ){
+				$selected=($page->ID==get_option('ym_success'))?' selected':'';
+            echo '<option value="' . $page->ID . '"'.$selected.'>' . $page->post_title . '</option>';
+        }
+    }
+    ?></select>
+</td>
+</tr>
+<tr valign="top">
+<th scope="row">Страница отказа<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Страница, которая отображается после отказа в оплате<span></th>
+<td><select id="ym_fail" name="ym_fail">
+    <?php
+    if( $pages = get_pages() ){
+        foreach( $pages as $page ){
+				$selected=($page->ID==get_option('ym_fail'))?' selected':'';
+            echo '<option value="' . $page->ID . '"'.$selected.'>' . $page->post_title . '</option>';
+        }
+    }
+    ?></select>
+</td>
+</tr>
+
 </table>
 
 <input type="hidden" name="action" value="update" />
-<input type="hidden" name="page_options" value="ym_Scid,ym_ShopID,ym_shopPassword,ym_Demo" />
+<input type="hidden" name="page_options" value="ym_Scid,ym_ShopID,ym_shopPassword,ym_Demo,ym_success,ym_fail" />
 
 <p class="submit">
 <input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
@@ -124,40 +230,34 @@ function after_update_setting($one){
 function YMcheckPayment()
 {
 	global $wpdb;
-	// if ($_REQUEST['yandex_money'] == 'hash') {
-		// echo md5('');
-	// }
-	if ($_REQUEST['yandex_money'] == 'check') {
+	if (isset($_REQUEST['yandex_money']) && $_REQUEST['yandex_money'] == 'check') {
 		$hash = md5($_POST['action'].';'.$_POST['orderSumAmount'].';'.$_POST['orderSumCurrencyPaycash'].';'.
 					$_POST['orderSumBankPaycash'].';'.$_POST['shopId'].';'.$_POST['invoiceId'].';'.
 					$_POST['customerNumber'].';'.get_option('ym_shopPassword'));
 		header('Content-Type: application/xml');
-		if (strtolower($hash) != strtolower($_POST['md5']) and (isset($_POST['md5']))) { // !=
-			$code = 1;
-			echo '<?xml version="1.0" encoding="UTF-8"?><checkOrderResponse performedDatetime="'. $_POST['requestDatetime'] .'" code="'.$code.'"'. ' invoiceId="'. $_POST['invoiceId'] .'" shopId="'. get_option('ym_ShopID') .'" message="bad md5"/>';
-		} else {
+		$code = 1;
+		$techMessage='bad md5';
+		if (isset($_POST['md5']) && strtolower($hash) == strtolower($_POST['md5'])){
 			$order = $wpdb->get_row('SELECT * FROM '.$wpdb->prefix.'posts WHERE ID = '.(int)$_POST['customerNumber']);
 			$order_summ = get_post_meta($order->ID,'_order_total',true);
 			if (!$order) {
 				$code = 200;
-				$answer = '<?xml version="1.0" encoding="UTF-8"?><checkOrderResponse performedDatetime="'. $_POST['requestDatetime'] .'" code="'.$code.'"'. ' invoiceId="'. $_POST['invoiceId'] .'" shopId="'. get_option('ym_ShopID') .'" message="wrong customerNumber"/>';
+				$techMessage = 'wrong customerNumber';
 			} elseif ($order_summ != $_POST['orderSumAmount']) { // !=
 				$code = 100;
-				$answer = '<?xml version="1.0" encoding="UTF-8"?><checkOrderResponse performedDatetime="'. $_POST['requestDatetime'] .'" code="'.$code.'"'. ' invoiceId="'. $_POST['invoiceId'] .'" shopId="'. get_option('ym_ShopID') .'" message="wrong orderSumAmount"/>';
+				$techMessage = 'wrong orderSumAmount';
 			} else {
 				$code = 0;
+				$techMessage = 'ok';
 				if ($_POST['action'] == 'paymentAviso') {
 					$order_w = new WC_Order( $order->ID );
 					$order_w->update_status('processing', __( 'Awaiting BACS payment', 'woocommerce' ));
 					$order_w->reduce_order_stock();
-					$answer = '<?xml version="1.0" encoding="UTF-8"?><paymentAvisoResponse performedDatetime="'.date('c').'" code="'.$code.'" invoiceId="'.$_POST['invoiceId'].'" shopId="'.get_option('ym_ShopID').'" />';
-				}
-				else{
-					$answer = '<?xml version="1.0" encoding="UTF-8"?><checkOrderResponse performedDatetime="'.date('c').'" code="'.$code.'" invoiceId="'.$_POST['invoiceId'].'" shopId="'.get_option('ym_ShopID').'" />';
 				}
 			}
 		}
-		
+		$answer = '<?xml version="1.0" encoding="UTF-8"?>
+			<'.$_POST['action'].'Response performedDatetime="'.date('c').'" code="'.$code.'" invoiceId="'.$_POST['invoiceId'].'" shopId="'.get_option('ym_ShopID').'" techMessage="'.$techMessage.'"/>';
 		die($answer);
 		
 	}
@@ -174,7 +274,7 @@ class yamoney_statistics {
 			'url' => get_option('siteurl'),
 			'cms' => 'wordpress-woo',
 			'version' => $wp_version,
-			'ver_mod' => '1.2.0',
+			'ver_mod' => '2.0.0',
 			'yacms' => false,
 			'email' => get_option('admin_email'),
 			'shopid' => get_option('ym_ShopID'),
