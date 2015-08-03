@@ -3,7 +3,7 @@
 	Plugin Name: yandexmoney_wp_woocommerce
 	Plugin URI: https://github.com/yandex-money/yandex-money-cms-wp-woocomerce
 	Description: Online shop with Yandex.Money support.
-	Version: 2.0.0
+	Version: 2.0.1
 	Author: Yandex.Money
 	Author URI: http://money.yandex.ru
  */
@@ -11,16 +11,10 @@
 include_once 'yamoney_gateway.class.php';
 
 function ya_all_gateway_icon( $gateways ) {
-		$url=WP_PLUGIN_URL."/".dirname( plugin_basename( __FILE__ ) ).'/images/';
-		$gateways['yandex_money']->icon = $url . 'pc.png';
-		$gateways['bank']->icon = $url . 'ac.png';
-		$gateways['terminal']->icon = $url . 'gp.png';
-		$gateways['mobile']->icon = $url . 'mc.png';
-		$gateways['yandex_webmoney']->icon = $url . 'wm.png';
-		$gateways['alfabank']->icon = $url . 'ab.png';
-		$gateways['sberbank']->icon = $url . 'sb.png';
-		$gateways['masterpass']->icon = $url . 'ma.png';
-		$gateways['psbank']->icon = $url . 'pb.png';
+	$list_icons=array('yandex_money'=>'pc','bank'=>'ac','terminal'=>'gp','mobile'=>'mc','yandex_webmoney'=>'wm','alfabank'=>'ab','sberbank'=>'sb','masterpass'=>'ma','psbank'=>'pb');
+	$url=(empty($_SERVER['HTTPS']))?WP_PLUGIN_URL:str_replace('http://','https://',WP_PLUGIN_URL);
+	$url.="/".dirname( plugin_basename( __FILE__ ) ).'/images/';
+	foreach ($list_icons as $name => $png_name) if (isset( $gateways[$name])) $gateways[$name]->icon = $url . $png_name.'.png';
 	return $gateways;
 } 
 add_filter( 'woocommerce_available_payment_gateways', 'ya_all_gateway_icon' );
@@ -274,7 +268,7 @@ class yamoney_statistics {
 			'url' => get_option('siteurl'),
 			'cms' => 'wordpress-woo',
 			'version' => $wp_version,
-			'ver_mod' => '2.0.0',
+			'ver_mod' => '2.0.1',
 			'yacms' => false,
 			'email' => get_option('admin_email'),
 			'shopid' => get_option('ym_ShopID'),
