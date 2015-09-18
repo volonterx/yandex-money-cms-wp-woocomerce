@@ -3,15 +3,14 @@
 	Plugin Name: yandexmoney_wp_woocommerce
 	Plugin URI: https://github.com/yandex-money/yandex-money-cms-wp-woocomerce
 	Description: Online shop with Yandex.Money support.
-	Version: 2.0.1
+	Version: 2.1.0
 	Author: Yandex.Money
 	Author URI: http://money.yandex.ru
  */
-
 include_once 'yamoney_gateway.class.php';
 
 function ya_all_gateway_icon( $gateways ) {
-	$list_icons=array('yandex_money'=>'pc','bank'=>'ac','terminal'=>'gp','mobile'=>'mc','yandex_webmoney'=>'wm','alfabank'=>'ab','sberbank'=>'sb','masterpass'=>'ma','psbank'=>'pb');
+	$list_icons=array('yandex_money'=>'pc','bank'=>'ac','terminal'=>'gp','mobile'=>'mc','yandex_webmoney'=>'wm','alfabank'=>'ab','sberbank'=>'sb','masterpass'=>'ma','psbank'=>'pb', 'mpos' => 'ac');
 	$url=(empty($_SERVER['HTTPS']))?WP_PLUGIN_URL:str_replace('http://','https://',WP_PLUGIN_URL);
 	$url.="/".dirname( plugin_basename( __FILE__ ) ).'/images/';
 	foreach ($list_icons as $name => $png_name) if (isset( $gateways[$name])) $gateways[$name]->icon = $url . $png_name.'.png';
@@ -101,6 +100,15 @@ class WC_ym_MA extends WC_yam_Gateway{
 		parent::__construct();
 	}
 }
+class WC_ym_MP extends WC_mpos_Gateway{
+	public function __construct(){
+      $this -> id = 'mpos';
+      $this -> method_title = 'Мобильный терминал';
+		$this -> long_name = 'Оплата через мобильный терминал';
+		$this -> payment_type = 'MP';
+		parent::__construct();
+	}
+}
 
 function woocommerce_add_all_payu_gateway($methods) {
    $methods[] = 'WC_ym_PC';
@@ -112,6 +120,7 @@ function woocommerce_add_all_payu_gateway($methods) {
 	$methods[] = 'WC_ym_SB';
 	$methods[] = 'WC_ym_MA';
 	$methods[] = 'WC_ym_PB';
+	$methods[] = 'WC_ym_MP';
    return $methods;
 }
 add_filter('woocommerce_payment_gateways', 'woocommerce_add_all_payu_gateway' );
@@ -122,6 +131,7 @@ function register_my_setting() {
 	register_setting( 'woocommerce-yamoney', 'ym_shopPassword'); 
 	register_setting( 'woocommerce-yamoney', 'ym_Demo'); 
 
+	register_setting( 'woocommerce-yamoney', 'ym_page_mpos');
 	register_setting( 'woocommerce-yamoney', 'ym_success'); 
 	register_setting( 'woocommerce-yamoney', 'ym_fail'); 
 	error_log("register_my_setting");
@@ -129,7 +139,6 @@ function register_my_setting() {
 add_action('admin_menu', 'register_yandexMoney_submenu_page');
 add_action('update_option_ym_ShopID', 'after_update_setting');
 function register_yandexMoney_submenu_page() {
-
 	add_submenu_page( 'woocommerce', 'Яндекс.Деньги Настройка', 'Яндекс.Деньги Настройка', 'manage_options', 'yandex_money_menu', 'yandexMoney_submenu_page_callback' );
 	add_action('admin_init', 'register_my_setting' );
 }
@@ -173,6 +182,19 @@ do_settings_sections( 'woocommerce-yamoney' );
 <th scope="row">shopPassword<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Устанавливается при регистрации магазина в системе Яндекс.Деньги<span></th>
 <td><input type="text" name="ym_shopPassword" value="<?php echo get_option('ym_shopPassword'); ?>" /></td>
 </tr>
+<tr valign="top">
+<th scope="row">Страница с инструкцией для оплаты через мобильный терминал<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Страница, которая содержит инструкцию для плательщика по оплате через мобильный терминал<span></th>
+<td><select id="ym_page_mpos" name="ym_page_mpos">
+    <?php
+    if( $pages = get_pages() ){
+        foreach( $pages as $page ){
+				$selected=($page->ID==get_option('ym_page_mpos'))?' selected':'';
+            echo '<option value="' . $page->ID . '"'.$selected.'>' . $page->post_title . '</option>';
+        }
+    }
+    ?></select>
+</td>
+</tr>
 
 <tr valign="top">
 <th scope="row">Страница успеха<br/><span style="line-height: 1;font-weight: normal;font-style: italic;font-size: 12px;">Страница, которая отображается после успешной оплаты<span></th>
@@ -204,7 +226,7 @@ do_settings_sections( 'woocommerce-yamoney' );
 </table>
 
 <input type="hidden" name="action" value="update" />
-<input type="hidden" name="page_options" value="ym_Scid,ym_ShopID,ym_shopPassword,ym_Demo,ym_success,ym_fail" />
+<input type="hidden" name="page_options" value="ym_Scid,ym_ShopID,ym_shopPassword,ym_Demo,ym_success,ym_fail,ym_page_mpos" />
 
 <p class="submit">
 <input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
@@ -233,27 +255,29 @@ function YMcheckPayment()
 		$techMessage='bad md5';
 		if (isset($_POST['md5']) && strtolower($hash) == strtolower($_POST['md5'])){
 			$order = $wpdb->get_row('SELECT * FROM '.$wpdb->prefix.'posts WHERE ID = '.(int)$_POST['customerNumber']);
-			$order_summ = get_post_meta($order->ID,'_order_total',true);
-			if (!$order) {
-				$code = 200;
-				$techMessage = 'wrong customerNumber';
-			} elseif ($order_summ != $_POST['orderSumAmount']) { // !=
-				$code = 100;
-				$techMessage = 'wrong orderSumAmount';
-			} else {
-				$code = 0;
-				$techMessage = 'ok';
-				if ($_POST['action'] == 'paymentAviso') {
-					$order_w = new WC_Order( $order->ID );
-					$order_w->update_status('processing', __( 'Awaiting BACS payment', 'woocommerce' ));
+			$order_summ =(isset($order->ID))?get_post_meta($order->ID,'_order_total',true):0;
+			if ($order){
+				if ($order_summ != $_POST['orderSumAmount']) { // !=
+					$code = 100;
+					$techMessage = 'wrong orderSumAmount';
+				}else{
+					$code = 0;
+					$techMessage = 'ok';
+					$order_w = new WC_Order($order->ID);
+					$order_w->update_status(($_POST['action'] == 'paymentAviso')?'completed':'processing', __( 'Awaiting BACS payment', 'woocommerce' ));
 					$order_w->reduce_order_stock();
 				}
+			}elseif($_POST['paymentType']=='MP'){
+				$code = 0;
+				$techMessage = 'Mpos ok';
+			}else{
+				$code = 200;
+				$techMessage = 'wrong customerNumber';
 			}
 		}
 		$answer = '<?xml version="1.0" encoding="UTF-8"?>
 			<'.$_POST['action'].'Response performedDatetime="'.date('c').'" code="'.$code.'" invoiceId="'.$_POST['invoiceId'].'" shopId="'.get_option('ym_ShopID').'" techMessage="'.$techMessage.'"/>';
-		die($answer);
-		
+		die($answer);	
 	}
 }
 class yamoney_statistics {
@@ -268,7 +292,7 @@ class yamoney_statistics {
 			'url' => get_option('siteurl'),
 			'cms' => 'wordpress-woo',
 			'version' => $wp_version,
-			'ver_mod' => '2.0.1',
+			'ver_mod' => '2.1.0',
 			'yacms' => false,
 			'email' => get_option('admin_email'),
 			'shopid' => get_option('ym_ShopID'),
