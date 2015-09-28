@@ -3,14 +3,14 @@
 	Plugin Name: yandexmoney_wp_woocommerce
 	Plugin URI: https://github.com/yandex-money/yandex-money-cms-wp-woocomerce
 	Description: Online shop with Yandex.Money support.
-	Version: 2.1.0
+	Version: 2.2.0
 	Author: Yandex.Money
 	Author URI: http://money.yandex.ru
  */
 include_once 'yamoney_gateway.class.php';
 
 function ya_all_gateway_icon( $gateways ) {
-	$list_icons=array('yandex_money'=>'pc','bank'=>'ac','terminal'=>'gp','mobile'=>'mc','yandex_webmoney'=>'wm','alfabank'=>'ab','sberbank'=>'sb','masterpass'=>'ma','psbank'=>'pb', 'mpos' => 'ac');
+	$list_icons=array('yandex_money'=>'pc','bank'=>'ac','terminal'=>'gp','mobile'=>'mc','yandex_webmoney'=>'wm','alfabank'=>'ab','sberbank'=>'sb','masterpass'=>'ma','psbank'=>'pb','qiwi'=>'qw','qppi'=>'qp', 'mpos' => 'ac');
 	$url=(empty($_SERVER['HTTPS']))?WP_PLUGIN_URL:str_replace('http://','https://',WP_PLUGIN_URL);
 	$url.="/".dirname( plugin_basename( __FILE__ ) ).'/images/';
 	foreach ($list_icons as $name => $png_name) if (isset( $gateways[$name])) $gateways[$name]->icon = $url . $png_name.'.png';
@@ -91,6 +91,24 @@ class WC_ym_PB extends WC_yam_Gateway{
 		parent::__construct();
 	}
 }
+class WC_ym_QW extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'qiwi';
+      $this -> method_title = 'QIWI Wallet';
+		$this -> long_name = 'Оплата через QIWI Wallet';
+		$this -> payment_type = 'QW';
+		parent::__construct();
+	}
+}
+class WC_ym_QP extends WC_yam_Gateway{
+	public function __construct(){
+      $this -> id = 'qppi';
+      $this -> method_title = 'Доверительный платеж (Куппи.ру)';
+		$this -> long_name = 'Оплата через доверительный платеж (Куппи.ру)';
+		$this -> payment_type = 'QP';
+		parent::__construct();
+	}
+}
 class WC_ym_MA extends WC_yam_Gateway{
 	public function __construct(){
       $this -> id = 'masterpass';
@@ -120,6 +138,8 @@ function woocommerce_add_all_payu_gateway($methods) {
 	$methods[] = 'WC_ym_SB';
 	$methods[] = 'WC_ym_MA';
 	$methods[] = 'WC_ym_PB';
+	$methods[] = 'WC_ym_QW';
+	$methods[] = 'WC_ym_QP';
 	$methods[] = 'WC_ym_MP';
    return $methods;
 }
@@ -292,7 +312,7 @@ class yamoney_statistics {
 			'url' => get_option('siteurl'),
 			'cms' => 'wordpress-woo',
 			'version' => $wp_version,
-			'ver_mod' => '2.1.0',
+			'ver_mod' => '2.2.0',
 			'yacms' => false,
 			'email' => get_option('admin_email'),
 			'shopid' => get_option('ym_ShopID'),
