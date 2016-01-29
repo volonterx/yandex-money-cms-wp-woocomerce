@@ -3,7 +3,7 @@
 	Plugin Name: yandexmoney_wp_woocommerce
 	Plugin URI: https://github.com/yandex-money/yandex-money-cms-wp-woocomerce
 	Description: Online shop with Yandex.Money support.
-	Version: 2.2.1
+	Version: 2.2.2
 	Author: Yandex.Money
 	Author URI: http://money.yandex.ru
  */
@@ -285,10 +285,13 @@ function YMcheckPayment()
 					$techMessage = 'wrong orderSumAmount';
 				}else{
 					$code = 0;
-					$techMessage = 'ok';
+					$techMessage = 'processing';
 					$order_w = new WC_Order($order->ID);
-					$order_w->update_status(($_POST['action'] == 'paymentAviso')?'completed':'processing', __( 'Awaiting BACS payment', 'woocommerce' ));
-					$order_w->reduce_order_stock();
+					if ($_POST['action'] == 'paymentAviso'){
+						$techMessage = 'completed';
+						$order_w->reduce_order_stock();
+					}
+					$order_w->update_status($techMessage, __( 'Awaiting BACS payment', 'woocommerce' ));
 				}
 			}elseif($_POST['paymentType']=='MP'){
 				$code = 0;
