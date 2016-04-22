@@ -221,7 +221,7 @@ function yandexMoney_submenu_page_callback() {
                     <td><input type="text" name="ym_shopPassword" value="<?php echo get_option('ym_shopPassword'); ?>" /></td>
                 </tr>
                 <tr valign="top">
-                    <th scope="row">Режим оплаты</th>
+                    <th scope="row">Сценарий оплаты</th>
                     <td>
                         <input type="radio" name="ym_paymode" value="0" <?php if (get_option('ym_paymode')!='1') echo ' checked="checked" '; ?> />Выбор оплаты на стороне магазина<br>
                         <input type="radio" name="ym_paymode" value="1" <?php if (get_option('ym_paymode')=='1') echo ' checked="checked" '; ?> />Выбор оплаты на стороне сервиса Яндекс.Касса<br>

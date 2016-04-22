@@ -111,7 +111,7 @@ class WC_yam_Gateway extends WC_Payment_Gateway{
         $result .='jQuery(function(){
 		jQuery("body").block(
         {
-            message: "<img src=\"'.$woocommerce->plugin_url().'/assets/images/select2-spinner.gif\" alt=\"Redirecting…\" style=\"float:left; margin-right: 10px;\" />Спасибо за заказ. Сейчас Вы будете перенаправлены на страницу оплаты.",
+            message: "Спасибо за заказ. Сейчас Вы будете перенаправлены на страницу оплаты.",
                 overlayCSS:
         {
             background: "#fff",
