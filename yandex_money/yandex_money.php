@@ -3,7 +3,7 @@
 Plugin Name: yandexmoney_wp_woocommerce
 Plugin URI: https://github.com/yandex-money/yandex-money-cms-wp-woocomerce
 Description: Online shop with Yandex.Money support.
-Version: 2.3.0
+Version: 2.3.0.1
 Author: Yandex.Money
 Author URI: http://money.yandex.ru
  */
@@ -348,7 +348,7 @@ class yamoney_statistics {
             'url' => get_option('siteurl'),
             'cms' => 'wordpress-woo',
             'version' => $wp_version,
-            'ver_mod' => '2.3.0',
+            'ver_mod' => '2.3.0.1',
             'yacms' => false,
             'email' => get_option('admin_email'),
             'shopid' => get_option('ym_ShopID'),
